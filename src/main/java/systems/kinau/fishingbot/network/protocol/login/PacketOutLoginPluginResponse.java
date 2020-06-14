@@ -1,19 +1,23 @@
 package systems.kinau.fishingbot.network.protocol.login;
 
 import com.google.common.io.ByteArrayDataOutput;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.network.protocol.NetworkHandler;
 import systems.kinau.fishingbot.network.protocol.Packet;
 import systems.kinau.fishingbot.network.utils.ByteArrayDataInputWrapper;
 
-@AllArgsConstructor
-@NoArgsConstructor
 public class PacketOutLoginPluginResponse extends Packet {
 
     private int msgId;
     private boolean hasResponse;
     private byte[] data;
+
+    public PacketOutLoginPluginResponse(Stresser stresser, int msgId, boolean hasResponse, byte[] data) {
+        super(stresser);
+        this.msgId = msgId;
+        this.hasResponse = hasResponse;
+        this.data = data;
+    }
 
     @Override
     public void write(ByteArrayDataOutput out, int protocolId) {

@@ -7,6 +7,8 @@ package systems.kinau.fishingbot.network.protocol;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteArrayDataOutput;
+import lombok.Getter;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.network.utils.ByteArrayDataInputWrapper;
 import systems.kinau.fishingbot.network.utils.InvalidPacketException;
 import systems.kinau.fishingbot.network.utils.OverflowPacketException;
@@ -16,6 +18,12 @@ import java.io.IOException;
 import java.util.UUID;
 
 public abstract class Packet {
+
+    @Getter private Stresser stresser;
+
+    public Packet(Stresser stresser) {
+        this.stresser = stresser;
+    }
 
     public abstract void write(ByteArrayDataOutput out, int protocolId) throws IOException;
 

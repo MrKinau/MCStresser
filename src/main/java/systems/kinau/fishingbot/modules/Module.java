@@ -5,22 +5,26 @@
 
 package systems.kinau.fishingbot.modules;
 
-import systems.kinau.fishingbot.FishingBot;
+import lombok.Getter;
+import systems.kinau.fishingbot.Stresser;
 
 public abstract class Module {
 
     private boolean enabled = false;
+    @Getter private Stresser stresser;
+
+    public Module(Stresser stresser) {
+        this.stresser = stresser;
+    }
 
     public void enable() {
         this.enabled = true;
         onEnable();
-        FishingBot.getLog().info("Module \"" + this.getClass().getSimpleName() + "\" enabled!");
     }
 
     public void disable() {
         this.enabled = false;
         onDisable();
-        FishingBot.getLog().info("Module \"" + this.getClass().getSimpleName() + "\" disabled!");
     }
 
     public boolean isEnabled() {

@@ -6,21 +6,25 @@
 package systems.kinau.fishingbot.network.protocol.handshake;
 
 import com.google.common.io.ByteArrayDataOutput;
-import lombok.AllArgsConstructor;
-import systems.kinau.fishingbot.FishingBot;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.network.protocol.NetworkHandler;
 import systems.kinau.fishingbot.network.protocol.Packet;
 import systems.kinau.fishingbot.network.utils.ByteArrayDataInputWrapper;
 
-@AllArgsConstructor
 public class PacketOutHandshake extends Packet {
 
     private String serverName;
     private int serverPort;
 
+    public PacketOutHandshake(Stresser stresser, String serverName, int serverPort) {
+        super(stresser);
+        this.serverName = serverName;
+        this.serverPort = serverPort;
+    }
+
     @Override
     public void write(ByteArrayDataOutput out, int protocolId) {
-        writeVarInt(FishingBot.getInstance().getServerProtocol(), out);
+        writeVarInt(getStresser().getInstance().getServerProtocol(), out);
         writeString(serverName + "\0FML\0", out);
         out.writeShort(serverPort);
         writeVarInt(2, out); //next State = 2 -> LOGIN

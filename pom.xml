@@ -10,13 +10,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>systems.kinau</groupId>
-    <artifactId>FishingBot</artifactId>
+    <artifactId>Stresser</artifactId>
     <version>2.7.1</version>
-    <name>FishingBot</name>
-    <description>An AFK fishing bot for minecraft</description>
+    <name>Stresser</name>
+    <description>An Minecraft Stresser, which will connect multiple clients to test server performance</description>
 
     <properties>
-        <jar.finalName>Fishingbot</jar.finalName>
+        <jar.finalName>Stresser</jar.finalName>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 

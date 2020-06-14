@@ -6,20 +6,26 @@
 package systems.kinau.fishingbot.network.protocol.play;
 
 import com.google.common.io.ByteArrayDataOutput;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.network.protocol.NetworkHandler;
 import systems.kinau.fishingbot.network.protocol.Packet;
 import systems.kinau.fishingbot.network.utils.ByteArrayDataInputWrapper;
 
 import java.io.IOException;
 
-@AllArgsConstructor
 public class PacketOutLook extends Packet {
 
     @Getter private float yaw;
     @Getter private float pitch;
     @Getter private boolean onGround;
+
+    public PacketOutLook(Stresser stresser, float yaw, float pitch, boolean onGround) {
+        super(stresser);
+        this.yaw = yaw;
+        this.pitch = pitch;
+        this.onGround = onGround;
+    }
 
     @Override
     public void write(ByteArrayDataOutput out, int protocolId) throws IOException {

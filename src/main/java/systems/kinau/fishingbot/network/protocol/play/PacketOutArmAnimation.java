@@ -6,11 +6,16 @@
 package systems.kinau.fishingbot.network.protocol.play;
 
 import com.google.common.io.ByteArrayDataOutput;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.network.protocol.NetworkHandler;
 import systems.kinau.fishingbot.network.protocol.Packet;
 import systems.kinau.fishingbot.network.utils.ByteArrayDataInputWrapper;
 
 public class PacketOutArmAnimation extends Packet {
+
+    public PacketOutArmAnimation(Stresser stresser) {
+        super(stresser);
+    }
 
     @Override
     public void write(ByteArrayDataOutput out, int protocolId) {

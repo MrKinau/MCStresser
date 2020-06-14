@@ -7,7 +7,7 @@ package systems.kinau.fishingbot.network.protocol.play;
 
 import com.google.common.io.ByteArrayDataOutput;
 import lombok.Getter;
-import systems.kinau.fishingbot.FishingBot;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.event.play.SpawnPlayerEvent;
 import systems.kinau.fishingbot.network.protocol.NetworkHandler;
 import systems.kinau.fishingbot.network.protocol.Packet;
@@ -26,6 +26,10 @@ public class PacketInSpawnPlayer extends Packet {
     @Getter private byte yaw;
     @Getter private byte pitch;
 
+    public PacketInSpawnPlayer(Stresser stresser) {
+        super(stresser);
+    }
+
     @Override
     public void write(ByteArrayDataOutput out, int protocolId) throws IOException {
         //Only incoming packet
@@ -41,6 +45,6 @@ public class PacketInSpawnPlayer extends Packet {
         this.yaw = in.readByte();
         this.pitch = in.readByte();
 
-        FishingBot.getInstance().getEventManager().callEvent(new SpawnPlayerEvent(eID, uuid, x, y, z, yaw, pitch));
+        getStresser().getEventManager().callEvent(new SpawnPlayerEvent(eID, uuid, x, y, z, yaw, pitch));
     }
 }

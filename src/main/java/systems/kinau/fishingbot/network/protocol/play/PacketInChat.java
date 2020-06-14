@@ -13,8 +13,7 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import systems.kinau.fishingbot.FishingBot;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.event.play.ChatEvent;
 import systems.kinau.fishingbot.network.protocol.NetworkHandler;
 import systems.kinau.fishingbot.network.protocol.Packet;
@@ -24,12 +23,15 @@ import systems.kinau.fishingbot.network.utils.TextComponent;
 
 import java.util.UUID;
 
-@NoArgsConstructor
 public class PacketInChat extends Packet {
 
 	@Getter private String text;
 	@Getter private UUID sender;
 	private final JsonParser PARSER = new JsonParser();
+
+	public PacketInChat(Stresser stresser) {
+		super(stresser);
+	}
 
 	@Override
 	public void write(ByteArrayDataOutput out, int protocolId) {
@@ -48,10 +50,10 @@ public class PacketInChat extends Packet {
 				//Ignored
 			}
 
-			if (FishingBot.getInstance().getServerProtocol() >= ProtocolConstants.MINECRAFT_1_16_PRE_2)
+			if (getStresser().getServerProtocol() >= ProtocolConstants.MINECRAFT_1_16_PRE_2)
 				this.sender = readUUID(in);
 
-			FishingBot.getInstance().getEventManager().callEvent(new ChatEvent(getText(), getSender()));
+			getStresser().getEventManager().callEvent(new ChatEvent(getText(), getSender()));
 		} catch (Exception ignored) {
 			//Ignored
 		}

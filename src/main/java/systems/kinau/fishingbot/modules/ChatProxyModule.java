@@ -5,7 +5,7 @@
 
 package systems.kinau.fishingbot.modules;
 
-import systems.kinau.fishingbot.FishingBot;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.event.EventHandler;
 import systems.kinau.fishingbot.event.Listener;
 import systems.kinau.fishingbot.event.play.ChatEvent;
@@ -17,14 +17,18 @@ public class ChatProxyModule extends Module implements Listener {
 
     private Thread chatThread;
 
+    public ChatProxyModule(Stresser stresser) {
+        super(stresser);
+    }
+
     @Override
     public void onEnable() {
-        FishingBot.getInstance().getEventManager().registerListener(this);
+        getStresser().getInstance().getEventManager().registerListener(this);
         chatThread = new Thread(() -> {
             Scanner scanner = new Scanner(System.in);
             while(!chatThread.isInterrupted()){
                 String line = scanner.nextLine();
-                FishingBot.getInstance().getNet().sendPacket(new PacketOutChat(line));
+                getStresser().getInstance().getNet().sendPacket(new PacketOutChat(getStresser(), line));
             }
         });
         chatThread.start();
@@ -32,12 +36,12 @@ public class ChatProxyModule extends Module implements Listener {
 
     @Override
     public void onDisable() {
-        FishingBot.getInstance().getEventManager().unregisterListener(this);
+        getStresser().getInstance().getEventManager().unregisterListener(this);
     }
 
     @EventHandler
     public void onChat(ChatEvent event) {
         if (isEnabled() && !"".equals(event.getText()))
-            FishingBot.getLog().info("[CHAT] " + event.getText());
+            getStresser().getLog().info("[CHAT] " + event.getText());
     }
 }

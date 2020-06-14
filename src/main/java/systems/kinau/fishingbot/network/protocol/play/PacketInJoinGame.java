@@ -7,7 +7,7 @@ package systems.kinau.fishingbot.network.protocol.play;
 
 import com.google.common.io.ByteArrayDataOutput;
 import lombok.Getter;
-import systems.kinau.fishingbot.FishingBot;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.event.play.JoinGameEvent;
 import systems.kinau.fishingbot.network.protocol.NetworkHandler;
 import systems.kinau.fishingbot.network.protocol.Packet;
@@ -31,6 +31,10 @@ public class PacketInJoinGame extends Packet {
     @Getter private boolean enableRespawnScreen;
     @Getter private boolean debug;
     @Getter private boolean flat;
+
+    public PacketInJoinGame(Stresser stresser) {
+        super(stresser);
+    }
 
     @Override
     public void write(ByteArrayDataOutput out, int protocolId) {
@@ -123,7 +127,7 @@ public class PacketInJoinGame extends Packet {
             }
         }
 
-        FishingBot.getInstance().getEventManager().callEvent(
+        getStresser().getEventManager().callEvent(
                 new JoinGameEvent(eid, gamemode, worldIdentifier, dimension, spawnWorld,
                         hashedSeed, difficulty, maxPlayers, viewDistance, levelType,
                         reducedDebugInfo, enableRespawnScreen, debug, flat));

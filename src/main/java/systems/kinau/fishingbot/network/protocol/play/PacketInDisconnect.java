@@ -7,17 +7,19 @@ package systems.kinau.fishingbot.network.protocol.play;
 
 import com.google.common.io.ByteArrayDataOutput;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import systems.kinau.fishingbot.FishingBot;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.event.play.DisconnectEvent;
 import systems.kinau.fishingbot.network.protocol.NetworkHandler;
 import systems.kinau.fishingbot.network.protocol.Packet;
 import systems.kinau.fishingbot.network.utils.ByteArrayDataInputWrapper;
 
-@NoArgsConstructor
 public class PacketInDisconnect extends Packet {
 
     @Getter private String disconnectMessage;
+
+    public PacketInDisconnect(Stresser stresser) {
+        super(stresser);
+    }
 
     @Override
     public void write(ByteArrayDataOutput out, int protocolId) {
@@ -28,6 +30,6 @@ public class PacketInDisconnect extends Packet {
     public void read(ByteArrayDataInputWrapper in, NetworkHandler networkHandler, int length, int protocolId) {
         this.disconnectMessage = readString(in);
 
-        FishingBot.getInstance().getEventManager().callEvent(new DisconnectEvent(getDisconnectMessage()));
+        getStresser().getEventManager().callEvent(new DisconnectEvent(getDisconnectMessage()));
     }
 }

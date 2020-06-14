@@ -7,18 +7,20 @@ package systems.kinau.fishingbot.network.protocol.play;
 
 import com.google.common.io.ByteArrayDataOutput;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import systems.kinau.fishingbot.FishingBot;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.event.play.KeepAliveEvent;
 import systems.kinau.fishingbot.network.protocol.NetworkHandler;
 import systems.kinau.fishingbot.network.protocol.Packet;
 import systems.kinau.fishingbot.network.protocol.ProtocolConstants;
 import systems.kinau.fishingbot.network.utils.ByteArrayDataInputWrapper;
 
-@NoArgsConstructor
 public class PacketInKeepAlive extends Packet {
 
     @Getter private long id;
+
+    public PacketInKeepAlive(Stresser stresser) {
+        super(stresser);
+    }
 
     @Override
     public void write(ByteArrayDataOutput out, int protocolId) {
@@ -55,6 +57,6 @@ public class PacketInKeepAlive extends Packet {
                 break;
             }
         }
-        FishingBot.getInstance().getEventManager().callEvent(new KeepAliveEvent(getId()));
+        getStresser().getEventManager().callEvent(new KeepAliveEvent(getId()));
     }
 }

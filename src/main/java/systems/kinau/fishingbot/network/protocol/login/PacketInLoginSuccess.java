@@ -6,10 +6,8 @@
 package systems.kinau.fishingbot.network.protocol.login;
 
 import com.google.common.io.ByteArrayDataOutput;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import systems.kinau.fishingbot.FishingBot;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.event.login.LoginSuccessEvent;
 import systems.kinau.fishingbot.network.protocol.NetworkHandler;
 import systems.kinau.fishingbot.network.protocol.Packet;
@@ -20,12 +18,14 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.UUID;
 
-@AllArgsConstructor
-@NoArgsConstructor
 public class PacketInLoginSuccess extends Packet {
 
     @Getter private UUID uuid;
     @Getter private String userName;
+
+    public PacketInLoginSuccess(Stresser stresser) {
+        super(stresser);
+    }
 
     @Override
     public void write(ByteArrayDataOutput out, int protocolId) throws IOException { }
@@ -33,7 +33,7 @@ public class PacketInLoginSuccess extends Packet {
     @Override
     public void read(ByteArrayDataInputWrapper in, NetworkHandler networkHandler, int length, int protocolId) throws IOException {
 
-        if (FishingBot.getInstance().getServerProtocol() < ProtocolConstants.MINECRAFT_1_16_PRE_2) {
+        if (getStresser().getInstance().getServerProtocol() < ProtocolConstants.MINECRAFT_1_16_PRE_2) {
             String uuidStr = readString(in).replace("-", "");
             this.uuid = new UUID(new BigInteger(uuidStr.substring(0, 16), 16).longValue(), new BigInteger(uuidStr.substring(16), 16).longValue());
             this.userName = readString(in);
@@ -42,6 +42,6 @@ public class PacketInLoginSuccess extends Packet {
             this.userName = readString(in);
         }
 
-        FishingBot.getInstance().getEventManager().callEvent(new LoginSuccessEvent(uuid, userName));
+        getStresser().getInstance().getEventManager().callEvent(new LoginSuccessEvent(uuid, userName));
     }
 }

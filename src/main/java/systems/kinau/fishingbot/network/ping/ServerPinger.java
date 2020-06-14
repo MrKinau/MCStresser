@@ -10,7 +10,8 @@ import com.google.common.io.ByteStreams;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.AllArgsConstructor;
-import systems.kinau.fishingbot.FishingBot;
+import lombok.Getter;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.network.protocol.Packet;
 import systems.kinau.fishingbot.network.protocol.ProtocolConstants;
 import systems.kinau.fishingbot.network.utils.TextComponent;
@@ -30,12 +31,12 @@ public class ServerPinger {
 
     private String serverName;
     private int serverPort;
-    private FishingBot fishingBot;
+    @Getter private Stresser stresser;
 
     public void ping() {
         if(serverName == null || serverName.trim().isEmpty()) {
-            FishingBot.getLog().severe("Invalid server host given. Please change the server-ip in your config.properties");
-            System.exit(1);
+            getStresser().getLog().severe("Invalid server host given. Please change the server-ip in your config.properties");
+            return;
         }
 
         updateWithSRV();
@@ -50,7 +51,7 @@ public class ServerPinger {
 
             ByteArrayDataOutput buf = ByteStreams.newDataOutput();
             Packet.writeVarInt(0, buf);
-            Packet.writeVarInt(ProtocolConstants.getProtocolId(FishingBot.getInstance().getConfig().getDefaultProtocol()), buf);
+            Packet.writeVarInt(ProtocolConstants.getProtocolId(getStresser().getInstance().getConfig().getDefaultProtocol()), buf);
             Packet.writeString(serverName, buf);
             buf.writeShort(serverPort);
             Packet.writeVarInt(1, buf);
@@ -72,7 +73,7 @@ public class ServerPinger {
                 int protocolId = root.getAsJsonObject("version").get("protocol").getAsInt();
                 int currPlayers = root.getAsJsonObject("players").get("online").getAsInt();
 
-                FishingBot.getInstance().setServerProtocol(protocolId);
+                getStresser().getInstance().setServerProtocol(protocolId);
                 String description = "Unknown";
                 try {
                     try {
@@ -88,11 +89,7 @@ public class ServerPinger {
                     if(description.trim().isEmpty())
                         description = "Unknown";
                 }
-                FishingBot.getLog().info("Received pong: " + description + ", Version: " + ProtocolConstants.getVersionString(protocolId) + ", online: " + currPlayers);
-                if(currPlayers >= FishingBot.getInstance().getConfig().getAutoDisconnectPlayersThreshold() && FishingBot.getInstance().getConfig().isAutoDisconnect()) {
-                    FishingBot.getLog().warning("Max players threshold already reached. Stopping");
-                    FishingBot.getInstance().setWontConnect(true);
-                }
+                getStresser().getLog().info("Received pong: " + description + ", Version: " + ProtocolConstants.getVersionString(protocolId) + ", online: " + currPlayers);
             }
 
             out.close();
@@ -100,9 +97,9 @@ public class ServerPinger {
             socket.close();
 
         } catch (UnknownHostException e) {
-            FishingBot.getLog().severe("Unknown host: " + serverName);
+            getStresser().getLog().severe("Unknown host: " + serverName);
         } catch (IOException e) {
-            FishingBot.getLog().severe("Could not ping: " + serverName);
+            getStresser().getLog().severe("Could not ping: " + serverName);
         }
     }
 
@@ -111,15 +108,15 @@ public class ServerPinger {
         if(serverPort == 25565 || serverPort < 1) {
             String[] serverData = getServerAddress(serverName);
             if(!serverData[0].equalsIgnoreCase(serverName))
-                FishingBot.getLog().info("Changed server host to: " + serverData[0]);
+                getStresser().getLog().info("Changed server host to: " + serverData[0]);
             this.serverName = serverData[0];
             this.serverPort = Integer.valueOf(serverData[1]);
             if(serverPort != 25565)
-                FishingBot.getLog().info("Changed port to: " + serverPort);
+                getStresser().getLog().info("Changed port to: " + serverPort);
         }
 
-        FishingBot.getInstance().setServerHost(serverName);
-        FishingBot.getInstance().setServerPort(serverPort);
+        getStresser().getInstance().setServerHost(serverName);
+        getStresser().getInstance().setServerPort(serverPort);
     }
 
     /**

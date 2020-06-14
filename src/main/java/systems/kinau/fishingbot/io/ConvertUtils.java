@@ -4,9 +4,6 @@
  */
 package systems.kinau.fishingbot.io;
 
-import systems.kinau.fishingbot.FishingBot;
-import systems.kinau.fishingbot.fishing.AnnounceType;
-
 public class ConvertUtils {
 
     public static Object convert(String value, Class type) {
@@ -24,14 +21,6 @@ public class ConvertUtils {
             return Integer.valueOf(value);
         } else if(type.isAssignableFrom(long.class)) {
             return Long.valueOf(value);
-        } else if(type.isAssignableFrom(AnnounceType.class)) {
-            try {
-                return AnnounceType.valueOf(value);
-            } catch (IllegalArgumentException ex) {
-                FishingBot.getLog().warning("Could not find Announce-Type: " + value);
-                ex.printStackTrace();
-                return AnnounceType.ALL;
-            }
         }
         return null;
     }

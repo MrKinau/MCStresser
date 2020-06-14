@@ -8,14 +8,14 @@ package systems.kinau.fishingbot.bot;
 import com.google.common.io.ByteArrayDataOutput;
 import lombok.Getter;
 import lombok.Setter;
-import systems.kinau.fishingbot.FishingBot;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.event.EventHandler;
 import systems.kinau.fishingbot.event.Listener;
-import systems.kinau.fishingbot.event.play.*;
-import systems.kinau.fishingbot.fishing.AnnounceType;
+import systems.kinau.fishingbot.event.play.JoinGameEvent;
+import systems.kinau.fishingbot.event.play.PosLookChangeEvent;
+import systems.kinau.fishingbot.event.play.SetHeldItemEvent;
+import systems.kinau.fishingbot.event.play.UpdateSlotEvent;
 import systems.kinau.fishingbot.network.protocol.ProtocolConstants;
-import systems.kinau.fishingbot.network.protocol.play.PacketOutChat;
-import systems.kinau.fishingbot.network.protocol.play.PacketOutClientStatus;
 import systems.kinau.fishingbot.network.protocol.play.PacketOutTeleportConfirm;
 
 public class Player implements Listener {
@@ -33,9 +33,11 @@ public class Player implements Listener {
     @Getter @Setter private ByteArrayDataOutput slotData;
 
     @Getter @Setter private int entityID = -1;
+    @Getter private Stresser stresser;
 
-    public Player() {
-        FishingBot.getInstance().getEventManager().registerListener(this);
+    public Player(Stresser stresser) {
+        this.stresser = stresser;
+        getStresser().getEventManager().registerListener(this);
     }
 
     @EventHandler
@@ -45,22 +47,9 @@ public class Player implements Listener {
         this.z = event.getZ();
         this.yaw = event.getYaw();
         this.pitch = event.getPitch();
-        if (FishingBot.getInstance().getServerProtocol() >= ProtocolConstants.MINECRAFT_1_9)
-            FishingBot.getInstance().getNet().sendPacket(new PacketOutTeleportConfirm(event.getTeleportId()));
+        if (getStresser().getInstance().getServerProtocol() >= ProtocolConstants.MINECRAFT_1_9)
+            getStresser().getInstance().getNet().sendPacket(new PacketOutTeleportConfirm(getStresser(), event.getTeleportId()));
 
-    }
-
-    @EventHandler
-    public void onUpdateXP(UpdateExperienceEvent event) {
-        if(getLevels() >= 0 && getLevels() < event.getLevel()) {
-            if(FishingBot.getInstance().getConfig().getAnnounceTypeConsole() != AnnounceType.NONE)
-                FishingBot.getLog().info("Achieved level " + event.getLevel());
-            if(!FishingBot.getInstance().getConfig().getAnnounceLvlUp().equalsIgnoreCase("false"))
-                FishingBot.getInstance().getNet().sendPacket(new PacketOutChat(FishingBot.getInstance().getConfig().getAnnounceLvlUp().replace("%lvl%", String.valueOf(event.getLevel()))));
-        }
-
-        this.levels = event.getLevel();
-        this.experience = event.getExperience();
     }
 
     @EventHandler
@@ -80,16 +69,5 @@ public class Player implements Listener {
     @EventHandler
     public void onJoinGame(JoinGameEvent event) {
         setEntityID(event.getEid());
-        respawn();
-    }
-
-    @EventHandler
-    public void onUpdateHealth(UpdateHealthEvent event) {
-        if (event.getHealth() <= 0)
-            respawn();
-    }
-
-    public void respawn() {
-        FishingBot.getInstance().getNet().sendPacket(new PacketOutClientStatus(PacketOutClientStatus.Action.PERFORM_RESPAWN));
     }
 }

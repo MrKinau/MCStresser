@@ -6,7 +6,7 @@
 package systems.kinau.fishingbot.modules;
 
 import lombok.Getter;
-import systems.kinau.fishingbot.FishingBot;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.event.EventHandler;
 import systems.kinau.fishingbot.event.Listener;
 import systems.kinau.fishingbot.event.login.*;
@@ -29,24 +29,25 @@ public class LoginModule extends Module implements Listener {
 
     @Getter private String userName;
 
-    public LoginModule(String userName) {
+    public LoginModule(Stresser stresser, String userName) {
+        super(stresser);
         this.userName = userName;
-        FishingBot.getInstance().getEventManager().registerListener(this);
+        stresser.getInstance().getEventManager().registerListener(this);
     }
 
     @Override
     public void onEnable() {
-        FishingBot.getInstance().getNet().sendPacket(new PacketOutLoginStart(getUserName()));
+        getStresser().getInstance().getNet().sendPacket(new PacketOutLoginStart(getStresser(), getUserName()));
     }
 
     @Override
     public void onDisable() {
-        FishingBot.getInstance().getEventManager().unregisterListener(this);
+        getStresser().getInstance().getEventManager().unregisterListener(this);
     }
 
     @EventHandler
     public void onEncryptionRequest(EncryptionRequestEvent event) {
-        NetworkHandler networkHandler = FishingBot.getInstance().getNet();
+        NetworkHandler networkHandler = getStresser().getInstance().getNet();
 
         //Set public key
         networkHandler.setPublicKey(event.getPublicKey());
@@ -57,43 +58,42 @@ public class LoginModule extends Module implements Listener {
 
         byte[] serverIdHash = CryptManager.getServerIdHash(event.getServerId().trim(), event.getPublicKey(), secretKey);
         if(serverIdHash == null) {
-            FishingBot.getLog().severe("Cannot hash server id: exiting!");
-            FishingBot.getInstance().setRunning(false);
+            getStresser().getLog().severe("Cannot hash server id: exiting!");
+            getStresser().getInstance().setRunning(false);
             return;
         }
 
         String var5 = (new BigInteger(serverIdHash)).toString(16);
-        String var6 = sendSessionRequest(FishingBot.getInstance().getAuthData().getUsername(), "token:" + FishingBot.getInstance().getAuthData().getAccessToken() + ":" + FishingBot.getInstance().getAuthData().getProfile(), var5);
+        String var6 = sendSessionRequest(getStresser().getInstance().getUserName(), "token:" + null + ":" + null, var5);
 
-        networkHandler.sendPacket(new PacketOutEncryptionResponse(event.getServerId(), event.getPublicKey(), event.getVerifyToken(), secretKey));
+        networkHandler.sendPacket(new PacketOutEncryptionResponse(getStresser(), event.getServerId(), event.getPublicKey(), event.getVerifyToken(), secretKey));
         networkHandler.activateEncryption();
         networkHandler.decryptInputStream();
     }
 
     @EventHandler
     public void onLoginDisconnect(LoginDisconnectEvent event) {
-        FishingBot.getLog().severe("Login failed: " + event.getErrorMessage());
-        FishingBot.getInstance().setRunning(false);
-        FishingBot.getInstance().setAuthData(null);
+        getStresser().getLog().severe("Login failed: " + event.getErrorMessage());
+        getStresser().getInstance().setRunning(false);
     }
 
     @EventHandler
     public void onSetCompression(SetCompressionEvent event) {
-        FishingBot.getInstance().getNet().setThreshold(event.getThreshold());
+        getStresser().getInstance().getNet().setThreshold(event.getThreshold());
     }
 
     @EventHandler
     public void onLoginPluginRequest(LoginPluginRequestEvent event) {
         System.out.println(event.getMsgId() + " >> " + event.getChannel());
-        FishingBot.getInstance().getNet().sendPacket(new PacketOutLoginPluginResponse(event.getMsgId(), false, null));
+        getStresser().getInstance().getNet().sendPacket(new PacketOutLoginPluginResponse(getStresser(), event.getMsgId(), false, null));
     }
 
     @EventHandler
     public void onLoginSuccess(LoginSuccessEvent event) {
-        FishingBot.getLog().info("Login successful!");
-        FishingBot.getLog().info("Name: " + event.getUserName());
-        FishingBot.getLog().info("UUID: " + event.getUuid());
-        FishingBot.getInstance().getNet().setState(State.PLAY);
+        getStresser().getLog().info("Login successful!");
+        getStresser().getLog().info("Name: " + event.getUserName());
+        getStresser().getLog().info("UUID: " + event.getUuid());
+        getStresser().getInstance().getNet().setState(State.PLAY);
     }
 
     private String sendSessionRequest(String user, String session, String serverid) {

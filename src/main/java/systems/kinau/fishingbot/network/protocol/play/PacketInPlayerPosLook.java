@@ -7,15 +7,13 @@ package systems.kinau.fishingbot.network.protocol.play;
 
 import com.google.common.io.ByteArrayDataOutput;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import systems.kinau.fishingbot.FishingBot;
+import systems.kinau.fishingbot.Stresser;
 import systems.kinau.fishingbot.event.play.PosLookChangeEvent;
 import systems.kinau.fishingbot.network.protocol.NetworkHandler;
 import systems.kinau.fishingbot.network.protocol.Packet;
 import systems.kinau.fishingbot.network.protocol.ProtocolConstants;
 import systems.kinau.fishingbot.network.utils.ByteArrayDataInputWrapper;
 
-@NoArgsConstructor
 public class PacketInPlayerPosLook extends Packet {
 
     @Getter private double x;
@@ -24,6 +22,10 @@ public class PacketInPlayerPosLook extends Packet {
     @Getter private float yaw;
     @Getter private float pitch;
     @Getter private  int teleportId;
+
+    public PacketInPlayerPosLook(Stresser stresser) {
+        super(stresser);
+    }
 
     @Override
     public void write(ByteArrayDataOutput out, int protocolId) {
@@ -46,7 +48,7 @@ public class PacketInPlayerPosLook extends Packet {
             if(protocolId >= ProtocolConstants.MINECRAFT_1_9) {
                 this.teleportId = readVarInt(in); //tID
             }
-            FishingBot.getInstance().getEventManager().callEvent(new PosLookChangeEvent(x, y, z, yaw, pitch, teleportId));
+            getStresser().getEventManager().callEvent(new PosLookChangeEvent(x, y, z, yaw, pitch, teleportId));
         }
     }
 }

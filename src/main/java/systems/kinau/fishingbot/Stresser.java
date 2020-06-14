@@ -7,11 +7,8 @@ package systems.kinau.fishingbot;
 
 import lombok.Getter;
 import lombok.Setter;
-import systems.kinau.fishingbot.auth.AuthData;
-import systems.kinau.fishingbot.auth.Authenticator;
 import systems.kinau.fishingbot.bot.Player;
 import systems.kinau.fishingbot.event.EventManager;
-import systems.kinau.fishingbot.fishing.ItemHandler;
 import systems.kinau.fishingbot.io.LogFormatter;
 import systems.kinau.fishingbot.io.SettingsConfig;
 import systems.kinau.fishingbot.io.discord.DiscordMessageDispatcher;
@@ -19,7 +16,6 @@ import systems.kinau.fishingbot.modules.*;
 import systems.kinau.fishingbot.network.ping.ServerPinger;
 import systems.kinau.fishingbot.network.protocol.NetworkHandler;
 import systems.kinau.fishingbot.network.protocol.ProtocolConstants;
-import systems.kinau.fishingbot.realms.RealmsAPI;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,11 +26,11 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class FishingBot {
+public class Stresser {
 
     public static String PREFIX;
-    @Getter private static FishingBot instance;
-    @Getter public static Logger log = Logger.getLogger(FishingBot.class.getSimpleName());
+    @Getter private Stresser instance;
+    @Getter public Logger log = Logger.getLogger(Stresser.class.getSimpleName());
 
     @Getter @Setter private boolean running;
     @Getter private SettingsConfig config;
@@ -42,7 +38,6 @@ public class FishingBot {
     @Getter @Setter private int serverProtocol = ProtocolConstants.MINECRAFT_1_8; //default 1.8
     @Getter @Setter private String serverHost;
     @Getter @Setter private int serverPort;
-    @Getter @Setter private AuthData authData;
     @Getter @Setter private boolean wontConnect = false;
     @Getter         private EventManager eventManager;
     @Getter         private Player player;
@@ -50,20 +45,21 @@ public class FishingBot {
 
     @Getter         private Socket socket;
     @Getter         private NetworkHandler net;
-
-    @Getter @Setter private FishingModule fishingModule;
+    @Getter         private String userName;
 
     private File logsFolder = new File("logs");
 
-    public FishingBot() {
+    public Stresser(String userName) {
         instance = this;
+
+        this.userName = userName;
 
         try {
             final Properties properties = new Properties();
-            properties.load(this.getClass().getClassLoader().getResourceAsStream("fishingbot.properties"));
+            properties.load(this.getClass().getClassLoader().getResourceAsStream("stresser.properties"));
             PREFIX = properties.getProperty("name") + " v" + properties.getProperty("version") + " - ";
         } catch (Exception ex) {
-            PREFIX = "FishingBot vUnknown - ";
+            PREFIX = "Stresser vUnknown - ";
             ex.printStackTrace();
         }
 
@@ -87,55 +83,13 @@ public class FishingBot {
             fh.setFormatter(new LogFormatter());
         } catch (IOException e) {
             System.err.println("Could not create log!");
-            System.exit(1);
+            return;
         }
 
-        //Authenticate player if online-mode is set
-        if(getConfig().isOnlineMode())
-            authenticate();
-        else {
-            getLog().info("Starting in offline-mode with username: " + getConfig().getUserName());
-            this.authData = new AuthData(null, null, null, getConfig().getUserName());
-        }
+        getLog().info("Starting in offline-mode with username: " + getUserName());
 
         String ip = getConfig().getServerIP();
         int port = getConfig().getServerPort();
-
-        //Check rather to connect to realm
-        if (getConfig().getRealmId() != -1) {
-            RealmsAPI realmsAPI = new RealmsAPI(getAuthData());
-            if (getConfig().getRealmId() == 0) {
-                realmsAPI.printPossibleWorlds();
-                FishingBot.getLog().info("Shutting down, because realm-id is not set...");
-                System.exit(0);
-            }
-            if (getConfig().isRealmAcceptTos())
-                realmsAPI.agreeTos();
-            else {
-                FishingBot.getLog().severe("*****************************************************************************");
-                FishingBot.getLog().severe("If you want to use realms you have to accept the tos in the config.properties");
-                FishingBot.getLog().severe("*****************************************************************************");
-                System.exit(0);
-            }
-
-            String ipAndPort = null;
-            for (int i = 0; i < 5; i++) {
-                ipAndPort = realmsAPI.getServerIP(getConfig().getRealmId());
-                if (ipAndPort == null) {
-                    FishingBot.getLog().info("Trying to receive IP (Try " + (i + 1) + ")...");
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                } else
-                    break;
-            }
-            if (ipAndPort == null)
-                System.exit(0);
-            ip = ipAndPort.split(":")[0];
-            port = Integer.parseInt(ipAndPort.split(":")[1]);
-        }
 
         //Ping server
         getLog().info("Pinging " + ip + ":" + port + " with protocol of MC-" + getConfig().getDefaultProtocol());
@@ -151,17 +105,6 @@ public class FishingBot {
         if(isRunning())
             return;
         connect();
-    }
-
-    private boolean authenticate() {
-        Authenticator authenticator = new Authenticator(getConfig().getUserName(), getConfig().getPassword());
-        AuthData authData = authenticator.authenticate();
-        if(authData == null) {
-            setAuthData(new AuthData(null, null, null, getConfig().getUserName()));
-            return false;
-        }
-        setAuthData(authData);
-        return true;
     }
 
     private void connect() {
@@ -188,24 +131,20 @@ public class FishingBot {
                 }
                 this.socket = new Socket(serverName, port);
 
-                this.net = new NetworkHandler();
+                this.net = new NetworkHandler(this);
 
                 //Load EventManager
                 this.eventManager = new EventManager();
 
-                this.fishingModule = new FishingModule();
-                getFishingModule().enable();
-
-                new HandshakeModule(serverName, port).enable();
-                new LoginModule(getAuthData().getUsername()).enable();
+                new HandshakeModule(this, serverName, port).enable();
+                new LoginModule(this, getUserName()).enable();
                 if (getConfig().isProxyChat())
-                    new ChatProxyModule().enable();
+                    new ChatProxyModule(this).enable();
                 if(getConfig().isStartTextEnabled())
-                    new ChatCommandModule().enable();
-                this.clientModule = new ClientDefaultsModule();
+                    new ChatCommandModule(this).enable();
+                this.clientModule = new ClientDefaultsModule(this);
                 getClientModule().enable();
-                new ItemHandler(getServerProtocol());
-                this.player = new Player();
+                this.player = new Player(this);
 
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                     try {
@@ -236,10 +175,7 @@ public class FishingBot {
 
                 if (getClientModule() != null)
                     this.getClientModule().disable();
-                if (getFishingModule() != null)
-                    this.getFishingModule().disable();
                 this.socket = null;
-                this.fishingModule = null;
                 this.net = null;
             }
             if (getConfig().isAutoReconnect()) {
@@ -248,14 +184,6 @@ public class FishingBot {
                     Thread.sleep(getConfig().getAutoReconnectTime() * 1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                }
-                if (getAuthData() == null) {
-                    if (getConfig().isOnlineMode())
-                        authenticate();
-                    else {
-                        getLog().info("Starting in offline-mode with username: " + getConfig().getUserName());
-                        authData = new AuthData(null, null, null, getConfig().getUserName());
-                    }
                 }
             }
         } while (getConfig().isAutoReconnect());
